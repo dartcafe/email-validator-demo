@@ -1,0 +1,3 @@
+# Banned addresses
+# one address per line
+ceo@example.com

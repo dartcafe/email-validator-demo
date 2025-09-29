@@ -1,0 +1,5 @@
+# Domains known as disposable email adresses
+# one domain per line
+mailinator.com
+10minutemail.com
+tempmail.net

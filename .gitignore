@@ -1,0 +1,24 @@
+# Composer
+/vendor/
+**/vendor/
+composer.lock
+
+# Psalm / CS Fixer
+/.psalm
+/.psalm.cache
+/.php-cs-fixer.cache
+
+# OpenAPI
+public/openapi.json
+
+# Swagger UI assets
+public/docs/assets/
+
+# IDE & OS
+/.idea/
+/.vscode/
+/.DS_Store
+
+# misc Build/Cache
+/build/
+/var/

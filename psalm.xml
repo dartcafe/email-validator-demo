@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<psalm
+    errorLevel="2"
+    phpVersion="8.1"
+    resolveFromConfigFile="true"
+    cacheDirectory=".psalm/cache"
+    autoloader="vendor/autoload.php"
+    findUnusedCode="true"
+    findUnusedPsalmSuppress="true"
+    findUnusedBaselineEntry="true"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://getpsalm.org/schema/config"
+>
+    <projectFiles>
+        <directory name="src"/>
+        <ignoreFiles>
+            <directory name="vendor"/>
+        </ignoreFiles>
+    </projectFiles>
+</psalm>

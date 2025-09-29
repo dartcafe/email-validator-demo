@@ -1,0 +1,3 @@
+# email addresses treated as vip are only reported
+# one address per line
+vip.customer@example.com
