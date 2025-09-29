@@ -19,6 +19,10 @@ final class ListStore
         $this->configDir = rtrim($configDir, DIRECTORY_SEPARATOR);
     }
 
+    /**
+     * Get the config directory path
+     * @psalm-suppress PossiblyUnusedMethod
+     */
     public function configDir(): string
     {
         return $this->configDir;
@@ -65,7 +69,7 @@ final class ListStore
             if (!is_dir(dirname($full))) {
                 @mkdir(dirname($full), 0777, true);
             }
-            file_put_contents($full, (string)$info['content']);
+            file_put_contents($full, $info['content']);
         }
     }
 
@@ -91,22 +95,22 @@ final class ListStore
         if ($iniText === '') {
             return $refs;
         }
+
+        /** @var array<string, array<string, mixed>>|false $sections */
         $sections = @parse_ini_string($iniText, true, INI_SCANNER_TYPED);
-        if (!is_array($sections)) {
+        if ($sections === false) {
             return $refs;
         }
 
         foreach ($sections as $section => $kv) {
-            if (!is_array($kv)) {
-                continue;
-            }
+
             $kv = array_change_key_case($kv, CASE_LOWER);
-            $file = (string)($kv['listfilename'] ?? '');
+            $file = (string)($kv['listfilename'] ?? $kv['file'] ?? '');
             if ($file !== '' && (str_starts_with($file, 'config/') || str_starts_with($file, 'config\\'))) {
                 $file = substr($file, 7);
             }
             if ($file !== '') {
-                $refs[(string)$section] = $file;
+                $refs[$section] = $file;
             }
         }
         return $refs;

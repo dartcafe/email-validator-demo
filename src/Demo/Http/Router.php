@@ -17,8 +17,8 @@ final class Router
     /**
      * Register a GET route
      *
-     * @param string   $path    The request path (e.g. "/validate")
-     * @param callable $handler The handler function, which takes a Request and returns a Response
+     * @param string                      $path    The request path (e.g. "/validate")
+     * @param callable(Request): Response $handler The handler function, which takes a Request and returns a Response
      */
     public function get(string $path, callable $handler): void
     {
@@ -28,8 +28,8 @@ final class Router
     /**
      * Register a POST route
      *
-     * @param string   $path    The request path (e.g. "/validate")
-     * @param callable $handler The handler function, which takes a Request and returns a Response
+     * @param string                      $path    The request path (e.g. "/validate")
+     * @param callable(Request): Response $handler The handler function, which takes a Request and returns a Response
      */
     public function post(string $path, callable $handler): void
     {

@@ -59,12 +59,11 @@ final class RateLimiter
             if ($raw === false) {
                 $raw = '';
             }
-            $state = is_string($raw) && $raw !== '' ? json_decode($raw, true) : null;
+            $state = $raw !== '' ? json_decode($raw, true) : null;
             if (!is_array($state) || !isset($state['t'], $state['tokens'])) {
-                $state = ['t' => $now, 'tokens' => $this->capacity * 1.0];
+                $state = ['t' => $now, 'tokens' => (float)$this->capacity];
             } else {
-                $state['t'] = (float)$state['t'];
-                $state['tokens'] = (float)$state['tokens'];
+                $state = ['t' => (float)$state['t'], 'tokens' => (float)$state['tokens']];
             }
 
             // refill
@@ -90,15 +89,22 @@ final class RateLimiter
             // write back atomically
             ftruncate($fp, 0);
             rewind($fp);
-            fwrite($fp, json_encode($state));
+            $json = json_encode($state, JSON_PRESERVE_ZERO_FRACTION);
+            if ($json === false) {
+                // Fallback (sollte praktisch nie passieren)
+                $json = sprintf('{"t":%.6F,"tokens":%.6F}', $state['t'], $state['tokens']);
+            }
+            fwrite($fp, $json);
             fflush($fp);
             @flock($fp, LOCK_UN);
             fclose($fp);
 
             return [$allowed, $retryAfter];
         } catch (\Throwable) {
-            @flock($fp, LOCK_UN);
-            fclose($fp);
+            if (is_resource($fp)) {
+                @flock($fp, LOCK_UN);
+                fclose($fp);
+            }
             return [true, 0.0]; // fail-open in demo
         }
     }
