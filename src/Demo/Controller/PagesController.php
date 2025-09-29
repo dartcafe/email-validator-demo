@@ -14,7 +14,7 @@ final class PagesController
     /**
      * Render the home page
      */
-    public function home(Request $r): Response
+    public function home(Request $_): Response
     {
         ob_start(); ?>
 <!doctype html>

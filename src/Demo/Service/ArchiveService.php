@@ -13,7 +13,8 @@ final class ArchiveService
      * @param ListStore $store
      */
     public function __construct(private ListStore $store)
-    { }
+    {
+    }
 
     /**
      * Export ZIP (or JSON as fallback).
@@ -74,7 +75,6 @@ final class ArchiveService
             if (!is_array($data)) {
                 throw new \RuntimeException('Invalid JSON');
             }
-            /** @var string $ini */
             $ini = (string)($data['ini'] ?? '');
             /** @var array<string, array{path:string,content:string}> $files */
             $files = (array)($data['files'] ?? []);
@@ -102,6 +102,9 @@ final class ArchiveService
             $name = $stat['name'];
             // Normalize & guard
             $name = str_replace(['\\','/'], '/', $name);
+            if (!is_string($name)) {
+                continue;
+            }
             $name = ltrim($name, '/');
             if ($name === '' || str_contains($name, '../')) {
                 continue;

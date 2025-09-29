@@ -168,7 +168,8 @@ function renderChecklist(data) {
     if (matched.length) {
       matched.forEach((m) => {
         const t = document.createElement("span");
-        t.className = "chip " + (m.typ === "deny" ? "chip-deny" : "chip-allow");
+        t.className =
+          "chip " + (m.type === "deny" ? "chip-deny" : "chip-allow");
         t.textContent = m.name + (m.matchedValue ? ` (${m.matchedValue})` : "");
         chipbar.appendChild(t);
       });
@@ -194,8 +195,8 @@ function renderChecklist(data) {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${l.humanName ?? l.name}</td>
-        <td><span class="badge ${l.typ === "deny" ? "danger" : "ok"}">${
-        l.typ
+        <td><span class="badge ${l.type === "deny" ? "danger" : "ok"}">${
+        l.type
       }</span></td>
         <td>${l.checkType}</td>
         <td>${l.matched ? "Yes" : "No"}</td>

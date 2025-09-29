@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Dartcafe\EmailValidator\Demo\Controller;
 
+use Dartcafe\EmailValidator\Contracts\ListProvider;
 use Dartcafe\EmailValidator\Demo\Http\Request;
 use Dartcafe\EmailValidator\Demo\Http\Response;
 use Dartcafe\EmailValidator\Demo\Service\RateLimiter;
 use Dartcafe\EmailValidator\EmailValidator;
-use Dartcafe\EmailValidator\Lists\ListManager;
 
 /**
  * Controller for /validate endpoint.
@@ -20,16 +20,20 @@ use Dartcafe\EmailValidator\Lists\ListManager;
  */
 final class ValidationController
 {
+    /** @var null|callable():(?ListProvider) */
+    private $listsFactory;
+
     /**
-     * @param ListManager|null $lists The ListManager instance or null if no lists are configured
+     * @param null|callable():(?ListProvider) $listsFactory A function that returns a ListProvider or null
      * @param RateLimiter      $limiter The rate limiter instance
      * @param \Closure         $rateKeyProvider A function that takes a Request and returns a string key for rate limiting
      */
     public function __construct(
-        private ?ListManager $lists,
+        ?callable $listsFactory,
         private RateLimiter $limiter,
-        private \Closure $rateKeyProvider,   // fn(Request): string
+        private \Closure $rateKeyProvider,
     ) {
+        $this->listsFactory = $listsFactory;
     }
 
     /**
@@ -39,7 +43,9 @@ final class ValidationController
      */
     public function handle(Request $r): Response
     {
+        $lists = $this->listsFactory ? ($this->listsFactory)() : null;
         // single configurable bucket
+        /** @var string $key */
         $key = ($this->rateKeyProvider)($r);           // "global" or "ip:1.2.3.4"
         [$ok, $retry] = $this->limiter->hit($key, 1);  // cost=1
         if (!$ok) {
@@ -56,7 +62,7 @@ final class ValidationController
             return Response::json(400, ['error' => 'Missing or invalid "email"']);
         }
 
-        $validator = new EmailValidator(lists: $this->lists);
+        $validator = new EmailValidator(lists: $lists);
         $res = $validator->validate($email);
         return Response::json(200, $res);
     }

@@ -15,7 +15,7 @@ final class Request
      * @param array<string,string> $query Associative array of query parameters
      * @param string|null $rawBody The raw request body, or null if none
      * @param array<string,string> $headers Associative array of HTTP headers
-     * @param array<string,mixed>|null $json The parsed JSON body, or null if not JSON
+     * @param array<array-key,mixed>|null $json The parsed JSON body, or null if not JSON
      * @param string $ip The client's IP address
      */
     public function __construct(
@@ -36,26 +36,49 @@ final class Request
      * Create a Request object from PHP global variables
      *
      * @return self
+     * @psalm-suppress PossiblyUnusedMethod
      */
     public static function fromGlobals(): self
     {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
 
+
+        /** @var array<string,string> $headers */
         $headers = [];
-        foreach ($_SERVER as $k => $v) {
-            if (str_starts_with($k, 'HTTP_')) {
-                $name = strtolower(str_replace('_', '-', substr($k, 5)));
+
+        /** @var array<string, mixed> $server */
+        $server = $_SERVER;
+
+        /** @var mixed $v */
+        foreach ($server as $k => $v) {
+            if (!str_starts_with($k, 'HTTP_')) {
+                continue;
+            }
+            $name = strtolower(str_replace('_', '-', substr($k, 5)));
+            if (is_array($v)) {
+                // z. B. mehrfach übergebene gleiche Header → zu String normalisieren
+                /** @var list<mixed> $v */
+                $headers[$name] = implode(',', array_map(static fn($x): string => (string)$x, $v));
+            } elseif (is_scalar($v)) {
                 $headers[$name] = (string)$v;
             }
         }
-        if (isset($_SERVER['CONTENT_TYPE'])) {
-            $headers['content-type'] = (string)$_SERVER['CONTENT_TYPE'];
+        if (isset($server['CONTENT_TYPE'])) {
+            /** @var mixed $ctVal */
+            $ctVal = $server['CONTENT_TYPE'];
+            if (is_array($ctVal)) {
+                /** @var list<mixed> $ctVal */
+                $headers['content-type'] = implode(',', array_map(static fn($x): string => (string)$x, $ctVal));
+            } else {
+                $headers['content-type'] = (string)$ctVal;
+            }
         }
-
         $raw = file_get_contents('php://input') ?: null;
         $json = null;
-        if ($raw !== null && isset($headers['content-type']) && stripos($headers['content-type'], 'application/json') !== false) {
+        $ct = $headers['content-type'] ?? '';
+        if ($raw !== null && $ct !== '' && stripos($ct, 'application/json') !== false) {
+
             $tmp = json_decode($raw, true);
             if (json_last_error() === JSON_ERROR_NONE && is_array($tmp)) {
                 $json = $tmp;
@@ -69,11 +92,11 @@ final class Request
         }
 
         $ip = '0.0.0.0';
-        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             // take first IP from XFF
-            $ip = trim(explode(',', (string)$_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
-        } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
-            $ip = (string)$_SERVER['REMOTE_ADDR'];
+            $ip = trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+        } elseif (isset($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
         }
 
         return new self($method, $path, $query, $raw, $headers, $json, $ip);

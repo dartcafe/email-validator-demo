@@ -52,7 +52,7 @@ final class ListsController
      *   }
      * }
      */
-    public function get(Request $r): Response
+    public function get(Request $_): Response
     {
         $data = $this->store->load();
         return Response::json(200, [
@@ -99,7 +99,7 @@ final class ListsController
      *
      * @return Response The ZIP file as an attachment
      */
-    public function export(Request $r): Response
+    public function export(Request $_): Response
     {
         $pkg = $this->archive->exportZip();
         return new Response(
@@ -145,7 +145,9 @@ final class ListsController
             return Response::json(400, ['error' => 'Upload a file as "archive"']);
         }
         $tmp = $_FILES['archive']['tmp_name'];
-        $ctype = (string)($_FILES['archive']['type'] ?? 'application/octet-stream');
+        $ctype = is_string($_FILES['archive']['type'] ?? null)
+            ? $_FILES['archive']['type']
+            : 'application/octet-stream';
         $summary = $this->archive->importFromUpload($tmp, $ctype);
         return Response::json(200, ['status' => 'ok', 'summary' => $summary]);
     }

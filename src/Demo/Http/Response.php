@@ -42,6 +42,7 @@ final class Response
 
     /**
      * Send the response to the client
+     * @psalm-suppress PossiblyUnusedMethod
      */
     public function send(): void
     {
