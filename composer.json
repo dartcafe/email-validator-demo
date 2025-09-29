@@ -9,6 +9,11 @@
         "vimeo/psalm": "^5.25",
         "zircote/swagger-php": "^4.9"
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Dartcafe\\EmailValidator\\Demo\\Docs\\": "docs/"
+        }
+    },
     "config": {
         "optimize-autoloader": true,
         "sort-packages": true,
@@ -18,7 +23,7 @@
     },
     "require": {
         "php": ">=8.1",
-        "dartcafe/email-validator": "0.1.1"
+        "dartcafe/email-validator": "0.1.2"
     },
     "prefer-stable": true,
     "autoload": {
