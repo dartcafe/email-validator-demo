@@ -18,6 +18,11 @@
         </ignoreFiles>
     </projectFiles>
     <issueHandlers>
+        <UnusedClass>
+            <errorLevel type="suppress">
+                <directory name="src/Demo/Docs"/>
+            </errorLevel>
+        </UnusedClass>
         <RiskyTruthyFalsyComparison>
             <errorLevel type="suppress">
                 <directory name="src"/>

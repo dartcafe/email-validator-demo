@@ -47,9 +47,10 @@ if (is_file($ship)) {
     exit(0);
 }
 
-// 2) otherwise: generate from package docs using swagger-php CLI
-$docsDir = $libPath . '/docs';
-if (!is_dir($docsDir)) {
+// 2) otherwise: generate from package docs + demo docs using swagger-php CLI
+$libDocs  = $libPath . '/docs';
+$demoDocs = $demoRoot . '/docs';
+if (!is_dir($libDocs) && !is_dir($demoDocs)) {
     fwrite(STDERR, "[docs:sync] No docs/ in package; nothing to generate.\n");
     exit(0);
 }
@@ -64,12 +65,13 @@ if (!is_file($openapiBin)) {
 
 @mkdir($demoPublic, 0777, true);
 
-// Build command: scan the package docs with demo autoload as bootstrap
+// Build command: scan lib docs + demo docs with demo autoload as bootstrap
 $cmd = escapeshellcmd($openapiBin)
      . ' --bootstrap ' . escapeshellarg($demoVendor . '/autoload.php')
      . ' --format json'
      . ' --output ' . escapeshellarg($target)
-     . ' ' . escapeshellarg($docsDir);
+     . (is_dir($libDocs)  ? ' ' . escapeshellarg($libDocs)  : '')
+     . (is_dir($demoDocs) ? ' ' . escapeshellarg($demoDocs) : '');
 
 echo "[docs:sync] Generating OpenAPI from $docsDir ...\n";
 exec($cmd, $out, $code);

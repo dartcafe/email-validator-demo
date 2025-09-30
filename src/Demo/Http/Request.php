@@ -59,7 +59,7 @@ final class Request
             if (is_array($v)) {
                 // z. B. mehrfach übergebene gleiche Header → zu String normalisieren
                 /** @var list<mixed> $v */
-                $headers[$name] = implode(',', array_map(static fn($x): string => (string)$x, $v));
+                $headers[$name] = implode(',', array_map(static fn ($x): string => (string)$x, $v));
             } elseif (is_scalar($v)) {
                 $headers[$name] = (string)$v;
             }
@@ -69,7 +69,7 @@ final class Request
             $ctVal = $server['CONTENT_TYPE'];
             if (is_array($ctVal)) {
                 /** @var list<mixed> $ctVal */
-                $headers['content-type'] = implode(',', array_map(static fn($x): string => (string)$x, $ctVal));
+                $headers['content-type'] = implode(',', array_map(static fn ($x): string => (string)$x, $ctVal));
             } else {
                 $headers['content-type'] = (string)$ctVal;
             }

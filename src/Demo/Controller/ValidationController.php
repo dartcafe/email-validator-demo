@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dartcafe\EmailValidator\Demo\Controller;
 
+use Dartcafe\EmailValidator\Contracts\DomainSuggestionProvider;
 use Dartcafe\EmailValidator\Contracts\ListProvider;
 use Dartcafe\EmailValidator\Demo\Http\Request;
 use Dartcafe\EmailValidator\Demo\Http\Response;
@@ -22,18 +23,22 @@ final class ValidationController
 {
     /** @var null|callable():(?ListProvider) */
     private $listsFactory;
-
+    /** @var callable():DomainSuggestionProvider */
+    private $suggestionsFactory;
     /**
-     * @param null|callable():(?ListProvider) $listsFactory A function that returns a ListProvider or null
-     * @param RateLimiter      $limiter The rate limiter instance
-     * @param \Closure         $rateKeyProvider A function that takes a Request and returns a string key for rate limiting
+     * @param null|callable():(?ListProvider)     $listsFactory A function that returns a ListProvider or null
+     * @param callable():DomainSuggestionProvider $suggestionsFactory
+     * @param RateLimiter                         $limiter The rate limiter instance
+     * @param \Closure                            $rateKeyProvider A function that takes a Request and returns a string key for rate limiting
      */
     public function __construct(
         ?callable $listsFactory,
+        callable $suggestionsFactory,
         private RateLimiter $limiter,
         private \Closure $rateKeyProvider,
     ) {
-        $this->listsFactory = $listsFactory;
+        $this->listsFactory       = $listsFactory;
+        $this->suggestionsFactory = $suggestionsFactory;
     }
 
     /**
@@ -44,6 +49,7 @@ final class ValidationController
     public function handle(Request $r): Response
     {
         $lists = $this->listsFactory ? ($this->listsFactory)() : null;
+        $suggestions = ($this->suggestionsFactory)();
         // single configurable bucket
         /** @var string $key */
         $key = ($this->rateKeyProvider)($r);           // "global" or "ip:1.2.3.4"
@@ -62,7 +68,7 @@ final class ValidationController
             return Response::json(400, ['error' => 'Missing or invalid "email"']);
         }
 
-        $validator = new EmailValidator(lists: $lists);
+        $validator = new EmailValidator($suggestions, $lists);
         $res = $validator->validate($email);
         return Response::json(200, $res);
     }
