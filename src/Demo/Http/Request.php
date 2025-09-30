@@ -57,7 +57,6 @@ final class Request
             }
             $name = strtolower(str_replace('_', '-', substr($k, 5)));
             if (is_array($v)) {
-                // z. B. mehrfach übergebene gleiche Header → zu String normalisieren
                 /** @var list<mixed> $v */
                 $headers[$name] = implode(',', array_map(static fn ($x): string => (string)$x, $v));
             } elseif (is_scalar($v)) {

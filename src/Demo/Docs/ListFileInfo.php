@@ -13,7 +13,6 @@ use OpenApi\Attributes as OA;
     properties: [
         new OA\Property(property: 'path', type: 'string', example: 'blacklists/banned_addresses.txt'),
         new OA\Property(property: 'content', type: 'string', example: "ceo@example.com\nvip@example.com"),
-        // Die Demo liefert derzeit auch fullPath – optional dokumentieren:
         new OA\Property(property: 'fullPath', type: 'string', nullable: true, example: '/var/www/.../config/blacklists/banned_addresses.txt'),
     ],
 )]

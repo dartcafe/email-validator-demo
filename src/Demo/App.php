@@ -38,7 +38,7 @@ final class App
         $suggestionStore = new SuggestionStore($configDir);
 
         $suggestionsFactory = static function () use ($suggestionStore): DomainSuggestionProvider {
-            $domains = $suggestionStore->load(); // list<string> aus config/suggestions.txt
+            $domains = $suggestionStore->load();
             return $domains !== []
                 ? new ArrayDomainSuggestionProvider($domains, TextDomainSuggestionProvider::default())
                 : TextDomainSuggestionProvider::default();

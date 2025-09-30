@@ -95,7 +95,6 @@ final class ListsPaths
                     ],
                 ),
             ),
-            // Alternative: JSON-Import (gleiches Format wie ListsSaveRequest)
             description: 'Either upload "archive" as multipart/form-data, or send application/json with the same structure as ListsSaveRequest',
         ),
         responses: [
