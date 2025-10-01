@@ -56,7 +56,6 @@ final class App
             : (static fn (): string => 'global');
 
         $pages = new PagesController();
-        // $validation = new ValidationController($listsFactory, $limiter, $keyProvider);
         $validation = new ValidationController($listsFactory, $suggestionsFactory, $limiter, $rateKeyProvider);
 
         $listsCtl = new ListsController($store, $archive);
