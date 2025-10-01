@@ -55,7 +55,7 @@
         "build": [
             "composer dump-autoload -o",
             "@cs",
-            "@psalm:check",
+            "@psalm",
             "@build:package"
         ],
         "build:package": "bash scripts/build-package.sh",
