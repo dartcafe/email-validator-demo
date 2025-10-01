@@ -28,7 +28,7 @@
     },
     "require": {
         "php": ">=8.1",
-        "dartcafe/email-validator": "0.1.4"
+        "dartcafe/email-validator": "^0.2.0"
     },
     "prefer-stable": true,
     "autoload": {
@@ -46,19 +46,39 @@
             "@stop",
             "@serve"
         ],
+        "docs": [
+            "@docs:assets",
+            "@docs:sync"
+        ],
         "docs:sync": "php scripts/sync-openapi.php",
         "docs:assets": "php scripts/sync-swagger-ui.php",
+        "build": [
+            "composer dump-autoload -o",
+            "@cs",
+            "@psalm:check",
+            "@build:package"
+        ],
         "build:package": "bash scripts/build-package.sh",
         "cs": "php-cs-fixer fix --diff --dry-run --verbose",
         "cs:fix": "php-cs-fixer fix",
         "psalm": "psalm",
+        "psalm:all": [
+            "composer dump-autoload -o",
+            "@psalm:cache",
+            "@psalm:info"
+        ],
+        "psalm:cache": "psalm --clear-cache",
+        "psalm:info": "psalm --show-info=true",
+        "psalm:fix": "psalm --alter --issues=MissingReturnType,InvalidReturnType,InvalidNullableReturnType,MismatchingDocblockParamType,MismatchingDocblockReturnType,MissingParamType,InvalidFalsableReturnType",
         "post-install-cmd": [
             "@docs:assets",
-            "@docs:sync"
+            "@docs:sync",
+            "composer dump-autoload -o"
         ],
         "post-update-cmd": [
             "@docs:assets",
-            "@docs:sync"
+            "@docs:sync",
+            "composer dump-autoload -o"
         ]
     }
 }

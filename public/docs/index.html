@@ -1,32 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <title>Email Validator – API Docs</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/swagger-ui-dist/swagger-ui.css"
-    />
+    <meta charset="UTF-8" />
+    <title>Email Validator API Docs</title>
+    <link rel="stylesheet" href="assets/swagger-ui.css" />
+    <style>
+      body {
+        margin: 0;
+        background: #fafafa;
+      }
+    </style>
   </head>
   <body>
     <div id="swagger-ui"></div>
-
-    <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
-    <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+    <script src="assets/swagger-ui-bundle.js" crossorigin></script>
+    <script src="assets/swagger-ui-standalone-preset.js" crossorigin></script>
     <script>
-      window.ui = SwaggerUIBundle({
-        url: "/openapi.json",
-        dom_id: "#swagger-ui",
-        deepLinking: true,
-        docExpansion: "full",
-        defaultModelsExpandDepth: 1,
-        defaultModelExpandDepth: 5,
-        displayRequestDuration: true,
-        showExtensions: true,
-        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
-        layout: "StandaloneLayout",
-      });
+      (async () => {
+        try {
+          const res = await fetch("/openapi.json", { cache: "no-store" });
+          const spec = await res.json();
+
+          // Dynamically set the server URL to the current host
+          spec.servers = [{ url: location.origin }];
+
+          window.ui = SwaggerUIBundle({
+            spec: spec,
+            dom_id: "#swagger-ui",
+            deepLinking: true,
+            presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+            layout: "StandaloneLayout",
+          });
+        } catch (e) {
+          console.error("Failed to load OpenAPI spec", e);
+          document.getElementById("swagger-ui").innerText =
+            "Failed to load API docs.";
+        }
+      })();
     </script>
   </body>
 </html>

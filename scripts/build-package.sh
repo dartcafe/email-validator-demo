@@ -4,14 +4,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.."; pwd)"
 OUT="$ROOT/build"
 PKG_DIR="$OUT/package"
-VERSION="$(date +%Y%m%d-%H%M%S)"   # oder: VERSION=$(jq -r .version composer.json 2>/dev/null || echo dev)
+VERSION="$(date +%Y%m%d-%H%M%S)"
 NAME="email-validator-demo-${VERSION}"
 
 rm -rf "$PKG_DIR" "$OUT/${NAME}.tar.gz" "$OUT/${NAME}.zip"
 mkdir -p "$PKG_DIR"
 
 echo "[1/5] Ensure Swagger assets & OpenAPI exist (dev env)…"
-# Baut in deinem Arbeitsbaum (mit dev-deps); tolerant falls dev fehlt.
 composer run docs:assets || true
 composer run docs:sync   || true
 
@@ -25,7 +24,7 @@ rsync -a \
   "$ROOT/public" "$ROOT/src" "$ROOT/config" "$ROOT/composer.json" "$ROOT/composer.lock" \
   "$PKG_DIR/"
 
-# (Optional) .htaccess bereitstellen, falls nicht vorhanden
+# (optional) provide .htaccess if not present
 if [ ! -f "$PKG_DIR/public/.htaccess" ]; then
   cat > "$PKG_DIR/public/.htaccess" <<'HTACCESS'
 <IfModule mod_rewrite.c>

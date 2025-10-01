@@ -91,7 +91,7 @@ final class RateLimiter
             rewind($fp);
             $json = json_encode($state, JSON_PRESERVE_ZERO_FRACTION);
             if ($json === false) {
-                // Fallback (sollte praktisch nie passieren)
+                // Fallback if encoding fails (should not happen)
                 $json = sprintf('{"t":%.6F,"tokens":%.6F}', $state['t'], $state['tokens']);
             }
             fwrite($fp, $json);

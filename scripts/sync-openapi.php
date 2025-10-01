@@ -2,17 +2,14 @@
 declare(strict_types=1);
 
 // Run from demo root: php scripts/sync-openapi.php
-$demoRoot = dirname(__DIR__);
+$demoRoot   = dirname(__DIR__);
 $demoVendor = $demoRoot . '/vendor';
 $demoPublic = $demoRoot . '/public';
-$target = $demoPublic . '/openapi.json';
+$target     = $demoPublic . '/openapi.json';
 
 require $demoVendor . '/autoload.php';
 
-/**
- * Try to locate the package install path using Composer 2 API.
- * @return string|null absolute path to dartcafe/email-validator or null
- */
+/** Find installed path of a composer package */
 function findLibPath(string $package = 'dartcafe/email-validator'): ?string {
     if (class_exists(\Composer\InstalledVersions::class)) {
         try {
@@ -20,63 +17,79 @@ function findLibPath(string $package = 'dartcafe/email-validator'): ?string {
             if (is_string($p) && $p !== '' && is_dir($p)) {
                 return realpath($p) ?: $p;
             }
-        } catch (\Throwable $e) {
-            // package not installed
-        }
+        } catch (\Throwable) {}
     }
-    // fallback guess
     $guess = __DIR__ . '/../vendor/' . $package;
-    return is_dir($guess) ? realpath($guess) ?: $guess : null;
+    return is_dir($guess) ? (realpath($guess) ?: $guess) : null;
 }
 
-$libPath = findLibPath();
-if ($libPath === null) {
-    fwrite(STDERR, "[docs:sync] Package dartcafe/email-validator not found in vendor.\n");
-    exit(0); // don't fail CI; demo can run without docs
-}
+$libPath  = findLibPath();
+$libDocs  = $libPath ? $libPath . '/docs' : null;
+$demoDocs = $demoRoot . '/src/Demo/Docs';
 
-// 1) copy if package already ships openapi.json
-$ship = $libPath . '/public/openapi.json';
-if (is_file($ship)) {
-    @mkdir($demoPublic, 0777, true);
-    if (!copy($ship, $target)) {
-        fwrite(STDERR, "[docs:sync] Failed to copy $ship -> $target\n");
-        exit(1);
-    }
-    echo "[docs:sync] Copied OpenAPI from package public/openapi.json\n";
-    exit(0);
-}
-
-// 2) otherwise: generate from package docs + demo docs using swagger-php CLI
-$libDocs  = $libPath . '/docs';
-$demoDocs = $demoRoot . '/docs';
-if (!is_dir($libDocs) && !is_dir($demoDocs)) {
-    fwrite(STDERR, "[docs:sync] No docs/ in package; nothing to generate.\n");
-    exit(0);
-}
-
-// find CLI
 $openapiBin = $demoVendor . '/bin/openapi';
 if (!is_file($openapiBin)) {
-    fwrite(STDERR, "[docs:sync] zircote/swagger-php not installed in demo (vendor/bin/openapi missing).\n");
-    fwrite(STDERR, "           Run: composer install --dev\n");
-    exit(0);
+    fwrite(STDERR, "[docs:sync] swagger-php (vendor/bin/openapi) missing. Run: composer install --dev\n");
+    exit(1);
 }
 
+$scanDirs = [];
+if ($libDocs && is_dir($libDocs))  { $scanDirs[] = $libDocs; }
+if (is_dir($demoDocs))             { $scanDirs[] = $demoDocs; }
+if (!$scanDirs) {
+    fwrite(STDERR, "[docs:sync] No docs directories found.\n");
+    exit(1);
+}
+
+// Collect all PHP files to force-load (attributes need reflection)
+$files = [];
+foreach ($scanDirs as $dir) {
+    $it = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS)
+    );
+    /** @var SplFileInfo $f */
+    foreach ($it as $f) {
+        if ($f->isFile() && strtolower($f->getExtension()) === 'php') {
+            $files[] = $f->getPathname();
+        }
+    }
+}
+
+// Build a temporary bootstrap that loads composer autoload + all doc files
 @mkdir($demoPublic, 0777, true);
+$tmpBootstrap = $demoPublic . '/.openapi_bootstrap.php';
+$bootstrapCode = <<<'PHP'
+<?php
+declare(strict_types=1);
+require __DIR__ . '/../vendor/autoload.php';
+$__OPENAPI_DOC_FILES = %s;
+foreach ($__OPENAPI_DOC_FILES as $__f) {
+    require_once $__f;
+}
+unset($__OPENAPI_DOC_FILES, $__f);
+PHP;
 
-// Build command: scan lib docs + demo docs with demo autoload as bootstrap
+file_put_contents(
+    $tmpBootstrap,
+    sprintf($bootstrapCode, var_export($files, true))
+);
+
+// Run swagger-php scan over both dirs
+$scanArg = implode(' ', array_map('escapeshellarg', $scanDirs));
 $cmd = escapeshellcmd($openapiBin)
-     . ' --bootstrap ' . escapeshellarg($demoVendor . '/autoload.php')
+     . ' --bootstrap ' . escapeshellarg($tmpBootstrap)
      . ' --format json'
-     . ' --output ' . escapeshellarg($target)
-     . (is_dir($libDocs)  ? ' ' . escapeshellarg($libDocs)  : '')
-     . (is_dir($demoDocs) ? ' ' . escapeshellarg($demoDocs) : '');
+     . ' --output '   . escapeshellarg($target)
+     . ' ' . $scanArg;
 
-echo "[docs:sync] Generating OpenAPI from $docsDir ...\n";
+echo "[docs:sync] Scanning: " . implode(', ', $scanDirs) . "\n";
 exec($cmd, $out, $code);
+
+// Clean bootstrap (optional)
+@unlink($tmpBootstrap);
+
 if ($code !== 0 || !is_file($target)) {
-    fwrite(STDERR, "[docs:sync] Generation failed (exit $code). Command:\n$cmd\n");
+    fwrite(STDERR, "[docs:sync] Generation failed (exit $code).\n$cmd\n");
     exit(1);
 }
 echo "[docs:sync] Generated $target\n";

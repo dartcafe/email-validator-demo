@@ -93,6 +93,29 @@ function renderChecklist(data) {
     s.className = "kv";
     s.innerHTML = `<div class="k">Suggestion</div><div class="v mono">${data.corrections.suggestion}</div>`;
     s.appendChild(copyBtn(data.corrections.suggestion));
+
+    const sc = data.corrections?.suggestionScore;
+    if (typeof sc === "number" && !Number.isNaN(sc)) {
+      const clamped = Math.max(0, Math.min(1, sc));
+      const pct = Math.round(clamped * 100);
+      const hue = Math.round(120 * clamped); // 0=red, 120=green
+
+      const scoreWrap = document.createElement("div");
+      scoreWrap.className = "score";
+
+      scoreWrap.innerHTML = `
+      <span class="badge score-badge" title="Typo likelihood">${pct}%</span>
+      <div class="score-bar">
+        <div class="score-fill" style="width:${pct}%; background:hsl(${hue} 70% 45%);"></div>
+      </div>
+      <span class="score-label">${pct}% likely typo</span>
+    `;
+
+      // append to .v to keep alignment
+      const v = s.querySelector(".v");
+      if (v) v.appendChild(scoreWrap);
+    }
+
     head.appendChild(s);
   }
   wrap.appendChild(head);
